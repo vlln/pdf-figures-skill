@@ -3,7 +3,7 @@
 刻度要在看图之前就画好。整批跑一条命令，之后每页只看一次。
 
 ```bash
-export _S="/Users/vlln/Projects/Skills/pdf-figures-skill/skills/pdf-figures"
+export _S="/path/to/skills/pdf-figures"
 python3 $_S/scripts/pdfx.py prep . ./ruled --dpi 150 --step 50
 ```
 

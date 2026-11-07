@@ -3,7 +3,7 @@
 在图上叠刻度，按刻度读数；放大再看，刻度数字不变。
 
 ```bash
-export _S="/Users/vlln/Projects/Skills/pdf-figures-skill/skills/pdf-figures"
+export _S="/path/to/skills/pdf-figures"
 python3 $_S/scripts/pdfx.py ruler page.jpg 1 --dpi 200 --step 50 --out page_ruler.png
 python3 $_S/scripts/pdfx.py zoom  page.jpg 1 --box 120,150,1000,900 --scale 1.6 --step 25 --out z.png
 ```

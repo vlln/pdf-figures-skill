@@ -40,7 +40,7 @@ def load_events(path: str):
 def encode_cwd(cwd: str) -> str:
     """与 dsh 的会话目录命名一致：'/' 换成 '-'，两端各补一个 '-'。
 
-    '/Users/vlln/.local/share/.../work' -> '--Users-vlln-.local-share-...-work--'
+    '/home/me/runs/r-abc/work' -> '--home-me-runs-r-abc-work--'
     点与下划线保留。
     """
     return "--" + cwd.replace("/", "-").strip("-") + "--"

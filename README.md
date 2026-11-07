@@ -17,7 +17,7 @@
 
 `pdf-figures` 把 PDF 当纯像素处理：先把页渲染成图，让模型看着图定出坐标，再由脚本按坐标裁剪。
 
-不解析文本层，也不解析矢量结构。扫描件、图片型 PDF、矢量页因此走同一条路径。需要整篇 markdown、公式或表格内容时，用 MinerU 之类的版面解析器。
+不解析文本层，也不解析矢量结构。扫描件、图片型 PDF、矢量页因此走同一条路径。
 
 ## 结果
 
@@ -45,36 +45,16 @@
 | 打包 | 把多个待查目标拼进一张图，每块保留自己的坐标，省去来回翻页。 |
 | 生产版技能 | 上面这些收敛后的版本，也是 `skills/pdf-figures` 交付的形态。 |
 
-## 成本
+使用官方Deepseek V4 Flash 1017，约 190 tok/s。
 
-| 组 | 输出 token/页 | 缓存读取 token/页 |
-|---|---|---|
-| 裸模型 | 10.0k | 447k |
-| 尺子 | 10.7k | 513k |
-| 像素算子 | 12.6k | 447k |
-| 复审 | 11.5k | 524k |
-| 打包 | 12.2k | 525k |
-| 生产版技能 | 9.7k | 287k |
-
-deepseek 实测约 190 tok/s，输出部分对应 51–66 秒/页。生产版的缓存读取更低（287k 对 447k），因为回合数更少。
-
-## 坐标
-
-| 名字 | 范围 | 用在哪 |
-|---|---|---|
-| 整页归一化 | 0..1，左上原点 | `norm` 输出、`export` 输入 |
-| 整页像素 | 200 dpi 渲染下的像素 | `view` 的 `--box`、`--boxes`、`--pack` |
-| 视图局部像素 | 本视图左上角为 0,0 | `view` 的刻度标签、`norm --boxes` |
-
-刻度数字随裁剪框变化，换框后要重新换算。`view` 会回传 `origin_px` 和 `scale`，原样交给 `norm` 即可。
 
 ## 安装
 
 ```bash
-skit install ./skills/pdf-figures
+skit install https://github.com/vlln/pdf-figures-skill/tree/main/skills/pdf-figures
 ```
 
-也可以把 `skills/pdf-figures` 复制到 Agent 的 skills 目录，Claude Code、Codex、Kimi 都是同样的做法。
+克隆到本地后，也可以用 `skit install ./skills/pdf-figures`。
 
 ## Skills
 

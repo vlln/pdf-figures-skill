@@ -3,7 +3,7 @@
 用脚本先把页面拆成候选块，你只做判断。
 
 ```bash
-export _S="/Users/vlln/Projects/Skills/pdf-figures-skill/skills/pdf-figures"
+export _S="/path/to/skills/pdf-figures"
 python3 $_S/scripts/pdfx.py scan page.jpg 1                 # 行带 + 候选块（带 box/area/ink）
 python3 $_S/scripts/pdfx.py scan page.jpg 1 --montage m.png # 同时生成编号拼图
 python3 $_S/scripts/pdfx.py coverage page.jpg 1 --prior p.json  # 还没被覆盖的墨迹区
