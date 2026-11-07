@@ -17,7 +17,7 @@
 
 `pdf-figures` 把 PDF 当纯像素处理：先把页渲染成图，让模型看着图定出坐标，再由脚本按坐标裁剪。
 
-不解析文本层，也不解析矢量结构。扫描件、图片型 PDF、矢量页因此走同一条路径，不需要两套逻辑。
+不解析文本层，也不解析矢量结构。扫描件、图片型 PDF、矢量页因此走同一条路径。需要整篇 markdown、公式或表格内容时，用 MinerU 之类的版面解析器。
 
 ## 结果
 
@@ -32,7 +32,7 @@
 | 打包 | 0.850 | 1.000 | 12.2k |
 | 生产版技能 | 0.850 | 1.000 | 9.7k |
 
-合并口径下六组都是 22/22。严格口径差 4 个，全部是同一类：GT 把一幅多面板图拆成几个块，而提示词要求一个外框。
+合并口径下六组都是 22/22。严格口径少 4 个，全部是同一类：GT 把一幅多面板图拆成几个块，而提示词要求一个外框。
 
 ## 实验设计
 
@@ -47,8 +47,6 @@
 
 ## 成本
 
-墙钟时间受部署影响：同为 deepseek，不同服务的生成速度不同。所以这里按 token 计。
-
 | 组 | 输出 token/页 | 缓存读取 token/页 |
 |---|---|---|
 | 裸模型 | 10.0k | 447k |
@@ -58,9 +56,7 @@
 | 打包 | 12.2k | 525k |
 | 生产版技能 | 9.7k | 287k |
 
-deepseek 实测约 190 tok/s。按这个速度折算，输出部分对应 51–66 秒/页；实际墙钟还要加上上下文预填充和工具执行。
-
-生产版的缓存读取明显更低（287k 对 447k），因为它的回合数更少。
+deepseek 实测约 190 tok/s，输出部分对应 51–66 秒/页。生产版的缓存读取更低（287k 对 447k），因为回合数更少。
 
 ## 坐标
 
@@ -78,7 +74,13 @@ deepseek 实测约 190 tok/s。按这个速度折算，输出部分对应 51–6
 skit install ./skills/pdf-figures
 ```
 
-或者把 `skills/pdf-figures` 复制到 Agent 的 skills 目录，Claude Code、Codex、Kimi 都是同样的做法。
+也可以把 `skills/pdf-figures` 复制到 Agent 的 skills 目录，Claude Code、Codex、Kimi 都是同样的做法。
+
+## Skills
+
+| Skill | Description |
+|---|---|
+| [pdf-figures](skills/pdf-figures/SKILL.md) | 纯像素取图：渲染页面、定位图表、按坐标裁剪与导出。 |
 
 ## 用法
 
@@ -95,11 +97,10 @@ python3 $_S/scripts/pdfx.py export paper.pdf out/ spec.json --dpi 300 --tight
 
 输入可以是 PDF，也可以是页面图片。
 
-## 限制
+## Requirements
 
-样本只有八页，且六组分数相同，说明这批题分不出方法差异。除裸模型与生产版各跑了三次外，其余组只跑了一次。
-
-不做版面结构化。要整篇 markdown、公式、表格内容，用 MinerU 之类的解析器。
+- Python 3.10+
+- `pypdfium2`、`Pillow`
 
 ## 评测
 
@@ -112,4 +113,4 @@ python3 bench/selftest.py      # 评分链路合成验证
 
 ## License
 
-MIT。评测数据来自 OmniDocBench（CC-BY-4.0），不随本仓库分发。
+MIT。评测数据来自 OmniDocBench（CC-BY-4.0）。
