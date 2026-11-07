@@ -6,6 +6,7 @@
 </p>
 
 <p align="center">
+  <img src="https://badgen.net/badge/version/0.3.0/8257D0" alt="version 0.3.0" />
   <img src="https://badgen.net/badge/license/MIT/blue" alt="MIT" />
   <img src="https://badgen.net/badge/spec/Agent%20Skills/8257D0" alt="Agent Skills spec" />
   <img src="https://badgen.net/badge/deps/pypdfium2%20%2B%20Pillow/4B8BBE" alt="two wheels" />
