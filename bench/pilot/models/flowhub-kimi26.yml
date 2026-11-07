@@ -1,0 +1,25 @@
+# 用 flowhub 的 kimi-k2.6 跑 headless：provider 定义 + 默认模型。
+- id: llm-pi-ai
+  name: "@deepseek-ai/dsh-llm-pi-ai"
+  config:
+    providers:
+      flowhub:
+        displayName: flowhub
+        apiKeyEnv: FLOWHUB_API_KEY
+        api: openai-completions
+        baseURL: https://openapi.flowhub.com.cn/v1
+        models:
+          - id: kimi-k2.6
+            name: kimi-k2.6
+            contextWindow: 256000
+            input:
+              - text
+              - image
+            # 网关只认 system/assistant/user/tool，不认 OpenAI 新的 developer 角色
+            compat:
+              supportsDeveloperRole: false
+- id: agent-default-model
+  name: "@deepseek-ai/dsh-agent-default-model"
+  config:
+    provider: flowhub
+    model: kimi-k2.6

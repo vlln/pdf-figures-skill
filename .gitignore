@@ -1,0 +1,10 @@
+# 实验产物与中间文件：都在 .work/，不随仓库分发
+.work/
+# Python
+__pycache__/
+*.pyc
+.pdfx-fixtures/
+# 系统与编辑器
+.DS_Store
+# PDF 与页面图不进仓库（体积大，且评测数据在外部）
+*.pdf
