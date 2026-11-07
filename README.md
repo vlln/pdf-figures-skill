@@ -1,10 +1,19 @@
-# pdf-figures
+<h1 align="center">pdf-figures</h1>
 
-**能看图的模型，能不能把 PDF 里的图和表取出来？能取到什么程度？**
+<p align="center">
+  <strong>能看图的模型，能不能把 PDF 里的图和表取出来？</strong><br/>
+  一次针对这个问题的实验，以及由实验沉淀出的取图 Skill。
+</p>
 
-这个仓库记录了一次针对这个问题的实验，并把实验里用到的工具整理成了一个 Agent Skill。
+<p align="center">
+  <img src="https://badgen.net/badge/license/MIT/blue" alt="MIT" />
+  <img src="https://badgen.net/badge/spec/Agent%20Skills/8257D0" alt="Agent Skills spec" />
+  <img src="https://badgen.net/badge/deps/pypdfium2%20%2B%20Pillow/4B8BBE" alt="two wheels" />
+</p>
 
-## 这是什么
+---
+
+## 概述
 
 `pdf-figures` 把 PDF 当纯像素处理：先把页渲染成图，让模型看着图定出坐标，再由脚本按坐标裁剪。
 
@@ -25,12 +34,12 @@
 
 合并口径下六组都是 22/22。严格口径差 4 个，全部是同一类：GT 把一幅多面板图拆成几个块，而提示词要求一个外框。
 
-## 各组在试什么
+## 实验设计
 
-| 组 | 试的是什么 |
+| 组 | 做法 |
 |---|---|
 | 裸模型 | 不给任何工具，直接看整页出坐标。作为对照。 |
-| 尺子 | 给模型一把可读的尺子：页面任意一块都能带刻度看，刻度单位是页面像素，不用估百分比。 |
+| 尺子 | 页面任意一块都能带刻度查看，刻度单位是页面像素；模型读刻度，换算交给脚本。 |
 | 像素算子 | 不给尺子，给算子（渲染、裁剪、描边、连通域），让模型自己量。 |
 | 复审 | 交卷前把框画回图上再看一遍，检查漏检和切边。 |
 | 打包 | 把多个待查目标拼进一张图，每块保留自己的坐标，省去来回翻页。 |
@@ -53,13 +62,23 @@ deepseek 实测约 190 tok/s。按这个速度折算，输出部分对应 51–6
 
 生产版的缓存读取明显更低（287k 对 447k），因为它的回合数更少。
 
+## 坐标
+
+| 名字 | 范围 | 用在哪 |
+|---|---|---|
+| 整页归一化 | 0..1，左上原点 | `norm` 输出、`export` 输入 |
+| 整页像素 | 200 dpi 渲染下的像素 | `view` 的 `--box`、`--boxes`、`--pack` |
+| 视图局部像素 | 本视图左上角为 0,0 | `view` 的刻度标签、`norm --boxes` |
+
+刻度数字随裁剪框变化，换框后要重新换算。`view` 会回传 `origin_px` 和 `scale`，原样交给 `norm` 即可。
+
 ## 安装
 
 ```bash
 skit install ./skills/pdf-figures
 ```
 
-或者直接把 `skills/pdf-figures` 复制到 Agent 的 skills 目录（Claude Code、Codex、Kimi 都是同样的做法）。
+或者把 `skills/pdf-figures` 复制到 Agent 的 skills 目录，Claude Code、Codex、Kimi 都是同样的做法。
 
 ## 用法
 
@@ -74,7 +93,7 @@ python3 $_S/scripts/pdfx.py norm  paper.pdf --boxes "0,0,300,120" --origin 120,1
 python3 $_S/scripts/pdfx.py export paper.pdf out/ spec.json --dpi 300 --tight
 ```
 
-输入可以是 PDF，也可以是页面图片。`view` 的刻度以本视图左上角为原点、单位是页面像素；换算回归一化坐标用 `norm`，`view` 会回传 `origin_px` 和 `scale`。
+输入可以是 PDF，也可以是页面图片。
 
 ## 限制
 
