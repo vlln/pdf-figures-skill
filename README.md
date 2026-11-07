@@ -47,6 +47,19 @@
 
 使用官方Deepseek V4 Flash 1017，约 190 tok/s。
 
+## 方法示意
+
+| 方法 | 中间处理 |
+|:--|:--|
+| **裸模型**：整页一次出坐标 | <img src="docs/readme/bare.png" width="300"> |
+| **尺子**：放大后按页面像素刻度读数 | <img src="docs/readme/ruler.png" width="300"> |
+| **像素算子**：墨迹掩膜与行带 | <img src="docs/readme/pixels.png" width="300"> |
+| **复审**：粗框与改正后的框对照 | <img src="docs/readme/review.png" width="300"> |
+| **打包**：多块拼一张，各自保留原点 | <img src="docs/readme/pack.png" width="300"> |
+| **生产版**：按坐标导出 | <img src="docs/readme/final.png" width="300"> |
+
+示意图由 `bench/make_readme_demo.py` 生成，页面也是脚本画的，不使用数据集图片。
+
 
 ## 安装
 
