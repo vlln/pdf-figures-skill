@@ -1,71 +1,65 @@
-<h1 align="center">pdf-figures</h1>
+# pdf-figures
 
-<p align="center">
-  <strong>能看图的模型，能不能把 PDF 里的图和表取出来？</strong><br/>
-  能。这个仓库既是回答这个问题的实验，也是答案本身：<br/>
-  一个纯像素的取图 Skill，不解析文本层、不解析矢量，扫描件与矢量页走同一条路。
-</p>
+**能看图的模型，能不能把 PDF 里的图和表取出来？能取到什么程度？**
 
-<p align="center">
-  <img src="https://badgen.net/badge/license/MIT/blue" alt="MIT" />
-  <img src="https://badgen.net/badge/spec/Agent%20Skills/8257D0" alt="Agent Skills spec" />
-  <img src="https://badgen.net/badge/deps/pypdfium2%20%2B%20Pillow/4B8BBE" alt="two wheels" />
-</p>
+这个仓库记录了一次针对这个问题的实验，并把实验里用到的工具整理成了一个 Agent Skill。
 
----
+## 这是什么
+
+`pdf-figures` 把 PDF 当纯像素处理：先把页渲染成图，让模型看着图定出坐标，再由脚本按坐标裁剪。
+
+不解析文本层，也不解析矢量结构。扫描件、图片型 PDF、矢量页因此走同一条路径，不需要两套逻辑。
 
 ## 结果
 
-在 8 页分层样本上（学术 / 书籍 / 杂志 × 图 / 表 / 混排 / 多目标），每次运行独立沙箱、禁联网：
+八页分层样本（学术 / 书籍 / 杂志 × 图 / 表 / 混排 / 多目标），每页独立环境、不联网。
 
-| 问题 | 结果 |
+| 组 | 严格 F1 | 合并 F1 | 输出 token/页 |
+|---|---|---|---|
+| 裸模型 | 0.850 | 1.000 | 10.0k |
+| 尺子 | 0.850 | 1.000 | 10.7k |
+| 像素算子 | 0.850 | 1.000 | 12.6k |
+| 复审 | 0.850 | 1.000 | 11.5k |
+| 打包 | 0.850 | 1.000 | 12.2k |
+| 生产版技能 | 0.850 | 1.000 | 9.7k |
+
+合并口径下六组都是 22/22。严格口径差 4 个，全部是同一类：GT 把一幅多面板图拆成几个块，而提示词要求一个外框。
+
+## 各组在试什么
+
+| 组 | 试的是什么 |
 |---|---|
-| 取得了吗 | 22 个目标全中（合并口径 **22/22**；严格口径 17/22，差的 4 个是"多面板该不该合成一框"的标注冲突） |
-| 有多快 | **79 秒/页**（3 次，76–81）；裸模型 99 秒/页（3 次，86–109） |
-| 复审有用吗 | 没有。加了复审的框与不加时逐像素重合 |
-| 换模型呢 | kimi-k2.6 慢 6.7 倍、4/8 超时；glm-5.3 只收文字，图都进不去 |
+| 裸模型 | 不给任何工具，直接看整页出坐标。作为对照。 |
+| 尺子 | 给模型一把可读的尺子：页面任意一块都能带刻度看，刻度单位是页面像素，不用估百分比。 |
+| 像素算子 | 不给尺子，给算子（渲染、裁剪、描边、连通域），让模型自己量。 |
+| 复审 | 交卷前把框画回图上再看一遍，检查漏检和切边。 |
+| 打包 | 把多个待查目标拼进一张图，每块保留自己的坐标，省去来回翻页。 |
+| 生产版技能 | 上面这些收敛后的版本，也是 `skills/pdf-figures` 交付的形态。 |
 
-## 实验组
+## 成本
 
-| 组 | 做法 | F1（严格 / 合并） | 秒/页 | 说明 |
-|---|---|---|---|---|
-| e1 | 裸模型 | 0.850 / **1.000** | 99.4 | 3 次，86–109 |
-| e2b | 尺子技能 | 0.850 / **1.000** | 90.4 | 单次 |
-| e3b | 像素技能 | 0.850 / **1.000** | 93.3 | 单次，干净重跑 |
-| e4 | 尺子 + 复审 | 0.850 / **1.000** | 95.7 | 白花时间，框不变 |
-| e5 | 四页拼一张 | 作废 | 67.3 | 分辨率除以 4，模型会拆回去 |
-| e5b–e5d | 打包开关迭代 | 0.850 / **1.000** | 92.8–132.2 | 措辞只改用量，不改分数 |
-| **p1** | **生产版技能** | 0.850 / **1.000** | **79.0** | 3 次，76–81，最快也最稳 |
-| m2 | kimi-k2.6 | **0.421** | 666.8 | 4/8 超时；跑完的四页 mIoU 0.96 |
+墙钟时间受部署影响：同为 deepseek，不同服务的生成速度不同。所以这里按 token 计。
 
-三点值得记住：
+| 组 | 输出 token/页 | 缓存读取 token/页 |
+|---|---|---|
+| 裸模型 | 10.0k | 447k |
+| 尺子 | 10.7k | 513k |
+| 像素算子 | 12.6k | 447k |
+| 复审 | 11.5k | 524k |
+| 打包 | 12.2k | 525k |
+| 生产版技能 | 9.7k | 287k |
 
-- **质量是饱和的**——所有 deepseek 组都是 22/22，这批题分不出方法高低。
-- **技能省的是长尾**——8 页里 5 页更快：个别页从 129 秒收敛到 44 秒，简单页反而多花几秒。
-- **瓶颈在推理开销**——kimi 定位精度 0.96 mIoU，但一页 11 分钟。
+deepseek 实测约 190 tok/s。按这个速度折算，输出部分对应 51–66 秒/页；实际墙钟还要加上上下文预填充和工具执行。
+
+生产版的缓存读取明显更低（287k 对 447k），因为它的回合数更少。
 
 ## 安装
-
-### [skit](https://github.com/vlln/skit)（推荐）
 
 ```bash
 skit install ./skills/pdf-figures
 ```
 
-### 手动
-
-| Agent | 命令 |
-|---|---|
-| **Claude Code** | `cp -r skills/pdf-figures .claude/skills/` |
-| **Codex** | `cp -r skills/pdf-figures ~/.codex/skills/` |
-| **Kimi** | `cp -r skills/pdf-figures ~/.kimi/skills/` |
-| **OpenCode** | `cp -r skills/pdf-figures ~/.opencode/skills/` |
-
-## Skills
-
-| Skill | Description |
-|---|---|
-| [pdf-figures](skills/pdf-figures/SKILL.md) | 纯像素取图：渲染、定位、裁剪、导出，不做版面解析。 |
+或者直接把 `skills/pdf-figures` 复制到 Agent 的 skills 目录（Claude Code、Codex、Kimi 都是同样的做法）。
 
 ## 用法
 
@@ -78,16 +72,15 @@ python3 $_S/scripts/pdfx.py view  paper.pdf --page 3 --ruler --out p3.png
 python3 $_S/scripts/pdfx.py view  paper.pdf --page 3 --box 120,150,1000,900 --scale 2 --ruler --out z.png
 python3 $_S/scripts/pdfx.py norm  paper.pdf --boxes "0,0,300,120" --origin 120,150
 python3 $_S/scripts/pdfx.py export paper.pdf out/ spec.json --dpi 300 --tight
-python3 $_S/scripts/pdfx.py selftest
 ```
 
-输入可以是 PDF，也可以直接是页面图片。`view` 的刻度以**本视图左上角**为原点、单位是整页像素；
-换算回归一化坐标用 `norm`（`view` 会回传 `origin_px` 与 `scale`）。
+输入可以是 PDF，也可以是页面图片。`view` 的刻度以本视图左上角为原点、单位是页面像素；换算回归一化坐标用 `norm`，`view` 会回传 `origin_px` 和 `scale`。
 
-## Requirements
+## 限制
 
-- Python 3.10+
-- `pypdfium2`、`Pillow`（两个 wheel，无系统二进制）
+样本只有八页，且六组分数相同，说明这批题分不出方法差异。除裸模型与生产版各跑了三次外，其余组只跑了一次。
+
+不做版面结构化。要整篇 markdown、公式、表格内容，用 MinerU 之类的解析器。
 
 ## 评测
 
@@ -97,10 +90,6 @@ python3 bench/selftest.py      # 评分链路合成验证
 ```
 
 逐 run 的可用性判定见 [bench/pilot/EVIDENCE.md](bench/pilot/EVIDENCE.md)，完整报告见 [REPORT.md](REPORT.md)。
-
-## 它不做什么
-
-不做版面结构化。要整篇 markdown、公式、表格内容，用 MinerU 之类的解析器。
 
 ## License
 
